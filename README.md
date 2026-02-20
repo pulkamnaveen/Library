@@ -24,6 +24,8 @@ DBURL=mongodb://127.0.0.1:27017/digital_library
 JWT_SECRET=change_this_to_a_strong_secret
 CLIENT_URL=http://localhost:5178
 ADMIN_SECRET=ADMIN2024
+NODE_ENV=development
+CORS_ORIGINS=http://localhost:5178,http://localhost:5179
 
 # Security / rate limiting
 API_RATE_LIMIT_WINDOW_MS=900000
@@ -44,6 +46,7 @@ EMAIL_FROM=
 Notes:
 - If SMTP fields are empty, forgot-password still works but reset links are logged in server console.
 - `CLIENT_URL` must match the client app URL where reset pages are hosted.
+- In production, set `NODE_ENV=production` and provide strict `CORS_ORIGINS` (comma-separated frontend/admin domains).
 
 ### Client
 

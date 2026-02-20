@@ -14,8 +14,36 @@ const discussionApp=require('./APIs/discussionAPI')
 
 
 const cors=require('cors')
-app.use(cors())
+const parseOrigins = (value) => {
+    if (!value) return [];
+    return value.split(',').map((origin) => origin.trim()).filter(Boolean);
+};
+
+const allowedOrigins = parseOrigins(process.env.CORS_ORIGINS);
+
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.length === 0 && process.env.NODE_ENV !== 'production') {
+            return callback(null, true);
+        }
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error('CORS policy: origin not allowed'));
+    },
+    credentials: true,
+}))
 app.use(helmet());
+app.disable('x-powered-by');
+
+if (process.env.NODE_ENV === 'production' && !process.env.DBURL) {
+    throw new Error('DBURL is required in production');
+}
+
+if (process.env.NODE_ENV === 'production' && allowedOrigins.length === 0) {
+    throw new Error('CORS_ORIGINS must be set in production');
+}
 
 const port=process.env.PORT || 4000;
 
@@ -27,7 +55,7 @@ const apiLimiter = rateLimit({
     message: { message: 'Too many requests, please try again later.' },
 });
 
-app.use(exp.json())
+app.use(exp.json({ limit: '1mb' }))
 app.use('/api', apiLimiter);
 
 app.use('/uploads', exp.static(path.join(__dirname, 'uploads')))
