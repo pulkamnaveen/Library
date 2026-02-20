@@ -7,6 +7,27 @@ const authenticate = require('../middleware/authenticate');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcryptjs');
+const rateLimit = require('express-rate-limit');
+
+const createLimiter = (windowMs, max, message) => rateLimit({
+  windowMs,
+  max,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message },
+});
+
+const authLimiter = createLimiter(
+  Number(process.env.AUTH_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
+  Number(process.env.AUTH_RATE_LIMIT_MAX || 20),
+  'Too many authentication attempts. Please try again later.'
+);
+
+const passwordResetLimiter = createLimiter(
+  Number(process.env.PASSWORD_RESET_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
+  Number(process.env.PASSWORD_RESET_RATE_LIMIT_MAX || 5),
+  'Too many password reset attempts. Please try again later.'
+);
 
 const createTransporter = () => {
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
@@ -50,6 +71,7 @@ const sendPasswordResetEmail = async (toEmail, resetUrl) => {
 
 userApp.post(
     '/register',
+  authLimiter,
     expressAsyncHandler(async (req, res) => {
       const { password, name, email, role } = req.body;
       // Auto-generate userId from email if not provided
@@ -98,6 +120,7 @@ userApp.post(
 
 userApp.post(
     '/login',
+  authLimiter,
     expressAsyncHandler(async (req, res) => {
       const { userId, email, password } = req.body;
   
@@ -132,6 +155,7 @@ userApp.post(
 
 userApp.post(
   '/forgot-password',
+  passwordResetLimiter,
   expressAsyncHandler(async (req, res) => {
     const { email } = req.body;
 
@@ -158,6 +182,13 @@ userApp.post(
     const resetUrl = `${clientBase}/reset-password/${resetToken}`;
     const smtpConfigured = Boolean(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS);
 
+    if (!smtpConfigured && process.env.NODE_ENV === 'production') {
+      user.resetPasswordToken = null;
+      user.resetPasswordExpire = null;
+      await user.save();
+      return res.status(503).send({ message: 'Password reset service is temporarily unavailable.' });
+    }
+
     if (!smtpConfigured && process.env.NODE_ENV !== 'production') {
       return res.status(200).send({
         message: 'Email service is not configured. Use the reset link below (development mode).',
@@ -181,6 +212,7 @@ userApp.post(
 
 userApp.post(
   '/reset-password/:token',
+  passwordResetLimiter,
   expressAsyncHandler(async (req, res) => {
     const { token } = req.params;
     const { password } = req.body;
