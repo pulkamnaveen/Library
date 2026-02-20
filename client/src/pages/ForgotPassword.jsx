@@ -6,6 +6,7 @@ import { API_BASE_URL } from "../config";
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [resetUrl, setResetUrl] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -13,11 +14,13 @@ const ForgotPassword = () => {
     e.preventDefault();
     setError("");
     setMessage("");
+    setResetUrl("");
     setLoading(true);
 
     try {
       const res = await axios.post(`${API_BASE_URL}/api/user/forgot-password`, { email });
       setMessage(res.data.message || "If this email is registered, a reset link has been sent.");
+      setResetUrl(res.data.resetUrl || "");
       setEmail("");
     } catch (err) {
       setError(err.response?.data?.message || "Unable to process request. Please try again.");
@@ -47,6 +50,12 @@ const ForgotPassword = () => {
           </div>
 
           {message && <p className="text-xs text-emerald-400">{message}</p>}
+          {resetUrl && (
+            <div className="text-xs bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-2.5 text-indigo-300 break-all">
+              <p className="mb-1">Reset link (development mode):</p>
+              <a href={resetUrl} className="underline hover:text-indigo-200">{resetUrl}</a>
+            </div>
+          )}
           {error && <p className="text-xs text-red-400">{error}</p>}
 
           <button

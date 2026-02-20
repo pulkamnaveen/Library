@@ -6,6 +6,7 @@ const ResourceRequest = require('../Models/ResourceRequestModel');
 const authenticate = require('../middleware/authenticate');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const bcrypt = require('bcryptjs');
 
 const createTransporter = () => {
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
@@ -153,8 +154,16 @@ userApp.post(
     user.resetPasswordExpire = new Date(Date.now() + 15 * 60 * 1000);
     await user.save();
 
-    const clientBase = process.env.CLIENT_URL || 'http://localhost:5178';
+    const clientBase = req.headers.origin || process.env.CLIENT_URL || 'http://localhost:5178';
     const resetUrl = `${clientBase}/reset-password/${resetToken}`;
+    const smtpConfigured = Boolean(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS);
+
+    if (!smtpConfigured && process.env.NODE_ENV !== 'production') {
+      return res.status(200).send({
+        message: 'Email service is not configured. Use the reset link below (development mode).',
+        resetUrl
+      });
+    }
 
     try {
       await sendPasswordResetEmail(user.email, resetUrl);
@@ -191,10 +200,15 @@ userApp.post(
       return res.status(400).send({ message: 'Reset link is invalid or has expired' });
     }
 
-    user.password = password;
-    user.resetPasswordToken = null;
-    user.resetPasswordExpire = null;
-    await user.save();
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await User.updateOne(
+      { _id: user._id },
+      {
+        password: hashedPassword,
+        resetPasswordToken: null,
+        resetPasswordExpire: null
+      }
+    );
 
     res.status(200).send({ message: 'Password reset successful. Please log in with your new password.' });
   })
