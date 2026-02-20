@@ -7,6 +7,7 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [resetUrl, setResetUrl] = useState("");
+  const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -15,6 +16,7 @@ const ForgotPassword = () => {
     setError("");
     setMessage("");
     setResetUrl("");
+    setCopied(false);
     setLoading(true);
 
     try {
@@ -26,6 +28,17 @@ const ForgotPassword = () => {
       setError(err.response?.data?.message || "Unable to process request. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!resetUrl) return;
+    try {
+      await navigator.clipboard.writeText(resetUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
     }
   };
 
@@ -52,7 +65,16 @@ const ForgotPassword = () => {
           {message && <p className="text-xs text-emerald-400">{message}</p>}
           {resetUrl && (
             <div className="text-xs bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-2.5 text-indigo-300 break-all">
-              <p className="mb-1">Reset link (development mode):</p>
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <p>Reset link (development mode):</p>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="px-2 py-0.5 rounded bg-indigo-500/20 hover:bg-indigo-500/30 text-[10px] font-medium text-indigo-200 transition"
+                >
+                  {copied ? "Copied" : "Copy link"}
+                </button>
+              </div>
               <a href={resetUrl} className="underline hover:text-indigo-200">{resetUrl}</a>
             </div>
           )}
