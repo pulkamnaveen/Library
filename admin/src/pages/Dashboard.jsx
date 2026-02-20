@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "../config";
 
 const StatCard = ({ label, value, color }) => (
   <div className="bg-[#12121a] border border-gray-800/40 rounded-xl p-5">
@@ -17,8 +18,8 @@ const Dashboard = () => {
     const fetchData = async () => {
       try {
         const [resAll, reqRes] = await Promise.all([
-          axios.get("http://localhost:4000/api/resource/all"),
-          axios.get("http://localhost:4000/api/admin/resource-requests"),
+          axios.get(`${API_BASE_URL}/api/resource/all`),
+          axios.get(`${API_BASE_URL}/api/admin/resource-requests`),
         ]);
         const resources = resAll.data.payload || [];
         setStats({
@@ -29,7 +30,7 @@ const Dashboard = () => {
         });
         setRecent(resources.slice(-5).reverse());
         setRequests((reqRes.data.payload || []).slice(-5).reverse());
-      } catch (e) {
+      } catch {
         // Failed
       }
     };

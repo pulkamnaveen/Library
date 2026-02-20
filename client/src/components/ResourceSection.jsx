@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../config";
 
 const ResourceSection = () => {
   const [recent, setRecent] = useState([]);
@@ -11,7 +12,7 @@ const ResourceSection = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get("http://localhost:4000/api/resource/stats");
+        const res = await axios.get(`${API_BASE_URL}/api/resource/stats`);
         setRecent(res.data.payload?.recentResources || []);
         setPopular(res.data.payload?.popularResources || []);
       } catch {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Users, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, ExternalLink, Plus } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 export default function MaterialRequest() {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ export default function MaterialRequest() {
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const response = await axios.get('http://localhost:4000/api/admin/resource-requests');
+        const response = await axios.get(`${API_BASE_URL}/api/admin/resource-requests`);
         setRequests(response.data.payload || []);
       } catch {
         setRequests([]);
@@ -27,7 +28,7 @@ export default function MaterialRequest() {
   const handleStatusChange = async (id, newStatus) => {
     try {
       const response = await axios.put(
-        `http://localhost:4000/api/admin/resource-requests/${id}`,
+        `${API_BASE_URL}/api/admin/resource-requests/${id}`,
         { status: newStatus }
       );
       if (response.data) {

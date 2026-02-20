@@ -21,15 +21,15 @@ const Sidebar = ({ onLogout, adminName }) => (
     </div>
 
     <nav className="flex-1 py-3 px-2">
-      {links.map(({ to, icon: Icon, label }) => (
-        <NavLink key={to} to={to} end
+      {links.map((link) => (
+        <NavLink key={link.to} to={link.to} end
           className={({ isActive }) =>
             `flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition mb-0.5 ${
               isActive ? "bg-indigo-500/10 text-indigo-400 border-l-2 border-indigo-500" : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/30"
             }`
           }>
-          <Icon size={14} />
-          {label}
+          <link.icon size={14} />
+          {link.label}
         </NavLink>
       ))}
     </nav>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Trash2, Edit, FileText, Download, X, Upload } from "lucide-react";
+import { API_BASE_URL } from "../config";
 
 const Resource = () => {
   const [resources, setResources] = useState([]);
@@ -13,13 +14,13 @@ const Resource = () => {
   const categories = ["Computer Science", "Electronics", "Mechanical", "Civil", "Mathematics", "Physics", "Chemistry", "Biology", "Other"];
   const types = ["Article", "Book", "Thesis", "Journal", "Conference Paper", "Report", "Other"];
   const publishers = ["IEEE", "Springer", "Elsevier", "Wiley", "ACM", "Other"];
-  const accessOptions = ["Open Access", "Restricted", "Faculty Only"];
+  const accessOptions = ["Public"];
 
   const fetchResources = async () => {
     try {
-      const res = await axios.get("http://localhost:4000/api/resource/all");
+      const res = await axios.get(`${API_BASE_URL}/api/resource/all`);
       setResources(res.data.payload || []);
-    } catch (e) {
+    } catch {
       // Failed
     } finally {
       setLoading(false);
@@ -31,7 +32,7 @@ const Resource = () => {
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this resource? This action cannot be undone.")) return;
     try {
-      await axios.put(`http://localhost:4000/api/admin/delete/${id}`, { isActive: false });
+      await axios.put(`${API_BASE_URL}/api/admin/delete/${id}`, { isActive: false });
       setResources(prev => prev.filter(r => r._id !== id));
       alert("Resource deleted successfully");
     } catch (e) {
@@ -80,7 +81,7 @@ const Resource = () => {
         });
         formData.append("pdf", pdfFile);
         
-        await axios.put(`http://localhost:4000/api/admin/resource/${editModal}`, formData, {
+        await axios.put(`${API_BASE_URL}/api/admin/resource/${editModal}`, formData, {
           headers: { "Content-Type": "multipart/form-data" }
         });
       } else {
@@ -88,7 +89,7 @@ const Resource = () => {
           ...form,
           keywords: form.keywords.split(",").map(k => k.trim()).filter(Boolean)
         };
-        await axios.put(`http://localhost:4000/api/admin/resource/${editModal}`, updateData);
+        await axios.put(`${API_BASE_URL}/api/admin/resource/${editModal}`, updateData);
       }
       
       setEditModal(null);
@@ -145,7 +146,7 @@ const Resource = () => {
                   <td className="px-4 py-3 text-gray-500">{r.authorName}</td>
                   <td className="px-4 py-3">
                     {r.fileUrl ? (
-                      <a href={`http://localhost:4000${r.fileUrl}`} target="_blank" rel="noreferrer"
+                      <a href={`${API_BASE_URL}${r.fileUrl}`} target="_blank" rel="noreferrer"
                         className="inline-flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition">
                         <Download size={12} /> PDF
                       </a>
@@ -181,7 +182,7 @@ const Resource = () => {
                   <p className="text-xs text-gray-500">{r.authorName}</p>
                 </div>
                 {r.fileUrl && (
-                  <a href={`http://localhost:4000${r.fileUrl}`} target="_blank" rel="noreferrer"
+                  <a href={`${API_BASE_URL}${r.fileUrl}`} target="_blank" rel="noreferrer"
                     className="ml-2 p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition">
                     <FileText size={14} />
                   </a>
@@ -302,7 +303,7 @@ const Resource = () => {
                   <div className="mb-2 flex items-center gap-2 text-xs text-gray-400">
                     <FileText size={14} />
                     <span>Current file available</span>
-                    <a href={`http://localhost:4000${form.fileUrl}`} target="_blank" rel="noreferrer"
+                    <a href={`${API_BASE_URL}${form.fileUrl}`} target="_blank" rel="noreferrer"
                       className="text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1">
                       <Download size={12} /> Download
                     </a>

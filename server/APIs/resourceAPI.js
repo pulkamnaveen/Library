@@ -2,7 +2,6 @@ const exp = require('express');
 const resourceApp = exp.Router();
 const Resource = require('../Models/ResourceModel');
 const expressAsyncHandler = require('express-async-handler');
-const authenticate = require('../middleware/authenticate');
 
 // GET: All resources
 resourceApp.get(

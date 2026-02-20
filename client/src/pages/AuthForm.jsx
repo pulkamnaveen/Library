@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
+import { API_BASE_URL } from "../config";
 
 const AuthForm = () => {
+  const adminUrl = import.meta.env.VITE_ADMIN_URL || "http://localhost:5179";
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "user", adminCode: "" });
   const [error, setError] = useState("");
@@ -19,7 +21,7 @@ const AuthForm = () => {
     setLoading(true);
     try {
       if (isLogin) {
-        const res = await axios.post("http://localhost:4000/api/user/login", {
+        const res = await axios.post(`${API_BASE_URL}/api/user/login`, {
           email: formData.email,
           password: formData.password,
         });
@@ -29,7 +31,7 @@ const AuthForm = () => {
 
         // If admin, redirect to admin panel with token
         if (user.role === "admin") {
-          window.location.href = `http://localhost:5174?token=${token}`;
+          window.location.href = `${adminUrl}?token=${encodeURIComponent(token)}`;
           return;
         }
         navigate("/");
@@ -41,7 +43,7 @@ const AuthForm = () => {
           role: formData.role,
         };
         if (formData.role === "admin") body.adminCode = formData.adminCode;
-        const res = await axios.post("http://localhost:4000/api/user/register", body);
+        const res = await axios.post(`${API_BASE_URL}/api/user/register`, body);
         // Register response: { payload: { _id, userId, name, email, role, token } }
         const payload = res.data.payload || {};
         const token = payload.token;
@@ -51,7 +53,7 @@ const AuthForm = () => {
         login_token(token);
 
         if (user.role === "admin") {
-          window.location.href = `http://localhost:5174?token=${token}`;
+          window.location.href = `${adminUrl}?token=${encodeURIComponent(token)}`;
           return;
         }
         navigate("/");
@@ -103,6 +105,14 @@ const AuthForm = () => {
                 className="w-full p-2.5 rounded-lg bg-[#0a0a0f] border border-gray-800/60 text-sm text-white placeholder-gray-600 outline-none focus:border-indigo-500/40 transition"
                 placeholder="Enter password" required />
             </div>
+
+            {isLogin && (
+              <div className="-mt-1">
+                <Link to="/forgot-password" className="text-[11px] text-indigo-400 hover:text-indigo-300 transition">
+                  Forgot password?
+                </Link>
+              </div>
+            )}
 
             {!isLogin && (
               <div>

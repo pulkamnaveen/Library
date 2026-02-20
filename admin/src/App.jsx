@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import Resource from "./pages/Resource";
 import AddResource from "./pages/AddResource";
 import MaterialRequest from "./pages/MaterialRequest";
+import { API_BASE_URL, CLIENT_APP_URL } from "./config";
 
 const App = () => {
   const [admin, setAdmin] = useState(null);
@@ -29,7 +30,7 @@ const App = () => {
       }
 
       try {
-        const res = await axios.get("http://localhost:4000/api/user/verify", {
+        const res = await axios.get(`${API_BASE_URL}/api/user/verify`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.data.user?.role === "admin") {
@@ -50,7 +51,7 @@ const App = () => {
   const handleLogout = () => {
     localStorage.removeItem("admin_token");
     setAdmin(null);
-    window.location.href = "http://localhost:5173/auth";
+    window.location.href = `${CLIENT_APP_URL}/auth`;
   };
 
   if (checking) {
@@ -75,7 +76,7 @@ const App = () => {
           </div>
           <h2 className="text-base font-bold text-white mb-1">Admin Access Required</h2>
           <p className="text-xs text-gray-500 mb-5">Please sign in with an admin account to access this panel.</p>
-          <a href="http://localhost:5173/auth"
+          <a href={`${CLIENT_APP_URL}/auth`}
             className="inline-block px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded-lg transition">
             Go to Login
           </a>

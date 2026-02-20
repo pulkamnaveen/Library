@@ -13,7 +13,6 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   const login = (userData) => {
-    console.log('[UserContext] Logging in user:', userData);
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
   };

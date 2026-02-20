@@ -1,36 +1,19 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
-import { useUser } from "./UserContext";
+import { API_BASE_URL } from "../config";
 
 const ResourceContext = createContext();
 
 export const ResourceProvider = ({ children }) => {
-  const { user } = useUser();
-  const role = user?.role || "public";
-
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchResources = async (userRole) => {
+  const fetchResources = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-
-      let endpoint = "http://localhost:4000/api/resource/public";
-      const config = {};
-
-      if (userRole === "student") {
-        endpoint = "http://localhost:4000/api/resource/student";
-        config.headers = { Authorization: `Bearer ${token}` };
-      } else if (userRole === "faculty") {
-        endpoint = "http://localhost:4000/api/resource/faculty";
-        config.headers = { Authorization: `Bearer ${token}` };
-      }
-
-      const res = await axios.get(endpoint, config);
+      const res = await axios.get(`${API_BASE_URL}/api/resource/public`);
       setResources(res.data.payload || []);
-    } catch (error) {
-      console.error("Error fetching resources:", error.response?.data || error.message);
+    } catch {
       setResources([]);
     } finally {
       setLoading(false);
@@ -38,8 +21,8 @@ export const ResourceProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    fetchResources(role);
-  }, [role]);
+    fetchResources();
+  }, []);
 
   return (
     <ResourceContext.Provider value={{ resources, loading }}>

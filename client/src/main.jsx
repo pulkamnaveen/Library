@@ -12,6 +12,8 @@ import SearchPage from "./pages/SearchPage";
 import RequestMaterial from "./pages/RequestMaterial";
 import ViewDetails from "./pages/ViewDetails";
 import AuthForm from "./pages/AuthForm";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import DiscussionForums from "./pages/DiscussionForums";
 import RootLayout from "./components/RootLayout";
 
@@ -27,6 +29,8 @@ const browserObj = createBrowserRouter([
       { path: "/view-details/:id", element: <ViewDetails /> },
       { path: "/discussion-forums", element: <DiscussionForums /> },
       { path: "/auth", element: <AuthForm /> },
+      { path: "/forgot-password", element: <ForgotPassword /> },
+      { path: "/reset-password/:token", element: <ResetPassword /> },
     ],
   },
 ]);

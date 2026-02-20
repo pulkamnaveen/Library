@@ -37,10 +37,6 @@ adminApp.post(
   '/add',
   upload.single('pdf'),
   expressAsyncHandler(async (req, res) => {
-    console.log('[Admin Add] Request received');
-    console.log('[Admin Add] Body:', req.body);
-    console.log('[Admin Add] File:', req.file);
-    
     const {
       title,
       abstract,
@@ -50,39 +46,12 @@ adminApp.post(
       category,
       resourceType,
       publisher,
-      access,
       fileUrl,
       requestId
     } = req.body;
 
-    console.log('[Admin Add] Title:', title);
-    console.log('[Admin Add] Access:', access);
-
     if (!title) {
-      console.error('[Admin Add] Missing title');
       return res.status(400).send({ message: 'Title is required' });
-    }
-
-    let parsedAccess = [];
-    try {
-      parsedAccess = typeof access === 'string' ? JSON.parse(access) : access;
-      console.log('[Admin Add] Parsed access:', parsedAccess);
-    } catch (e) {
-      console.error('[Admin Add] Access parse error:', e);
-      return res.status(400).send({ message: 'Invalid access format' });
-    }
-
-    if (!Array.isArray(parsedAccess) || parsedAccess.length === 0) {
-      console.error('[Admin Add] Invalid access array:', parsedAccess);
-      return res.status(400).send({ message: 'Access must be a non-empty array' });
-    }
-
-    const allowedAccess = ['Public'];
-    const isValidAccess = parsedAccess.every((role) => allowedAccess.includes(role));
-
-    if (!isValidAccess) {
-      console.error('[Admin Add] Invalid access values:', parsedAccess);
-      return res.status(400).send({ message: 'Invalid access values provided' });
     }
 
     let parsedKeywords = [];
@@ -110,9 +79,7 @@ adminApp.post(
       newResource.fileUrl = `/uploads/${req.file.filename}`;
     }
 
-    console.log('[Admin Add] Creating resource:', newResource);
     const dbRes = await Resource.create(newResource);
-    console.log('[Admin Add] Resource created with ID:', dbRes._id);
 
     if (requestId) {
       try {
@@ -122,11 +89,10 @@ adminApp.post(
           status: 'Approved'
         });
       } catch (e) {
-        console.error('Failed to update request:', e);
+        console.error('Failed to update request:', e.message);
       }
     }
 
-    console.log('[Admin Add] Sending success response');
     res.status(201).send({
       message: 'Resource added successfully',
       payload: dbRes,

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useUser } from "../context/UserContext";
+import { API_BASE_URL } from "../config";
 
 const MaterialRequestForm = () => {
   const { user } = useUser();
-  console.log('[MaterialRequestForm] Current user:', user);
   const [formData, setFormData] = useState({
     title: "", authors: "", resourceType: "", publisherOrJournal: "",
     year: "", doi: "", url: "", description: "", priority: "", reasonForRequest: ""
@@ -52,12 +52,9 @@ const MaterialRequestForm = () => {
         requestedById: user._id,
         requestedByName: user.name
       };
-      console.log('[MaterialRequestForm] Submitting request:', body);
-      console.log('[MaterialRequestForm] Token:', token?.substring(0, 20));
-      const response = await axios.post("http://localhost:4000/api/user/resource-request", body, {
+      const response = await axios.post(`${API_BASE_URL}/api/user/resource-request`, body, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      console.log('[MaterialRequestForm] Success:', response.data);
       
       // Check if it's actually a success (not a validation error)
       if (response.data.message && response.data.message.includes('validation failed')) {
@@ -166,7 +163,6 @@ const MaterialRequestForm = () => {
 
 const MyRequests = () => {
   const { user } = useUser();
-  console.log('[MyRequests] Current user:', user);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -174,11 +170,9 @@ const MyRequests = () => {
     const fetchRequests = async () => {
       try {
         const token = localStorage.getItem("token");
-        console.log('[MyRequests] Fetching with userId:', user?._id, 'token:', token?.substring(0, 20));
-        const res = await axios.get(`http://localhost:4000/api/user/resource-request/${user?._id}`, {
+        const res = await axios.get(`${API_BASE_URL}/api/user/resource-request/${user?._id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        console.log('[MyRequests] Fetched requests:', res.data.payload?.length);
         setRequests(res.data.payload || []);
       } catch {
         setRequests([]);

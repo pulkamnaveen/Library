@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useUser } from '../context/UserContext';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../config';
 
 const categories = ['General', 'Computer Science', 'Physics', 'Mathematics', 'Biology', 'Engineering', 'Economics', 'Other'];
 
@@ -40,7 +41,7 @@ function DiscussionForums() {
 
   const fetchDiscussions = async () => {
     try {
-      const res = await axios.get('http://localhost:4000/api/discussion/all');
+      const res = await axios.get(`${API_BASE_URL}/api/discussion/all`);
       setDiscussions(res.data.payload || []);
     } catch {
       setDiscussions([]);
@@ -64,7 +65,7 @@ function DiscussionForums() {
     if (!user) { navigate('/auth'); return; }
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:4000/api/discussion/create', {
+      await axios.post(`${API_BASE_URL}/api/discussion/create`, {
         ...newThread, authorId: user._id, authorName: user.name,
       }, { headers: { Authorization: `Bearer ${token}` } });
       setNewThread({ title: '', content: '', category: 'General' });
@@ -80,7 +81,7 @@ function DiscussionForums() {
     if (!user) { navigate('/auth'); return; }
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`http://localhost:4000/api/discussion/${activeChannel}/reply`, {
+      await axios.post(`${API_BASE_URL}/api/discussion/${activeChannel}/reply`, {
         content: newMessage, authorId: user._id, authorName: user.name,
       }, { headers: { Authorization: `Bearer ${token}` } });
       setNewMessage('');

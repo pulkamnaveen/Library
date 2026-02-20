@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Upload, X } from "lucide-react";
+import { API_BASE_URL } from "../config";
 
 const categories = ["Computer Science", "Electronics", "Mechanical", "Civil", "Mathematics", "Physics", "Chemistry", "Biology", "Other"];
 const types = ["Article", "Book", "Thesis", "Journal", "Conference Paper", "Report", "Other"];
 const publishers = ["IEEE", "Springer", "Elsevier", "Wiley", "ACM", "Other"];
-const accessOptions = ["Public"];
 
 const InputField = ({ label, value, onChange, area, placeholder, required, autoComplete }) => (
   <div>
@@ -61,7 +61,7 @@ const AddResource = () => {
         category: "",
         resourceType: req.resourceType || "",
         publisher: req.publisherOrJournal || "",
-        access: [],
+        access: ["Public"],
         fileUrl: req.url || ""
       });
       setRequestId(req._id);
@@ -69,13 +69,6 @@ const AddResource = () => {
   }, [location.state]);
 
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
-
-  const toggleAccess = (val) => {
-    setForm(prev => ({
-      ...prev,
-      access: prev.access.includes(val) ? prev.access.filter(a => a !== val) : [...prev.access, val],
-    }));
-  };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -90,9 +83,6 @@ const AddResource = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    console.log('[AddResource] Form data:', form);
-    console.log('[AddResource] PDF file:', pdfFile);
-    
     // Validate required fields
     if (!form.title || !form.authorName || !form.category || !form.resourceType) {
       console.error('[AddResource] Missing required fields');
@@ -101,7 +91,6 @@ const AddResource = () => {
       return;
     }
     
-    console.log('[AddResource] Validation passed, submitting...');
     setToast("⏳ Adding resource...");
     
     try {
@@ -125,15 +114,13 @@ const AddResource = () => {
         formData.append("requestId", requestId);
       }
 
-      console.log('[AddResource] Sending request to API...');
-      const response = await axios.post("http://localhost:4000/api/admin/add", formData, {
+      const response = await axios.post(`${API_BASE_URL}/api/admin/add`, formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
 
-      console.log('[AddResource] API response:', response);
       if (response.status === 200 || response.status === 201) {
         setToast("✓ Resource added successfully!" + (requestId ? " User has been notified." : ""));
-        setForm({ title: "", authorName: "", abstract: "", content: "", keywords: "", category: "", resourceType: "", publisher: "", access: [], fileUrl: "" });
+        setForm({ title: "", authorName: "", abstract: "", content: "", keywords: "", category: "", resourceType: "", publisher: "", access: ["Public"], fileUrl: "" });
         setPdfFile(null);
         setRequestId(null);
         

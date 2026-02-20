@@ -4,6 +4,48 @@ const User = require('../Models/UserModel');
 const expressAsyncHandler = require('express-async-handler');
 const ResourceRequest = require('../Models/ResourceRequestModel');
 const authenticate = require('../middleware/authenticate');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+
+const createTransporter = () => {
+  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
+
+  if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS) {
+    return null;
+  }
+
+  return nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: Number(SMTP_PORT),
+    secure: Number(SMTP_PORT) === 465,
+    auth: {
+      user: SMTP_USER,
+      pass: SMTP_PASS,
+    },
+  });
+};
+
+const sendPasswordResetEmail = async (toEmail, resetUrl) => {
+  const transporter = createTransporter();
+  const fromEmail = process.env.EMAIL_FROM || process.env.SMTP_USER || 'no-reply@digitallibrary.local';
+
+  if (!transporter) {
+    console.log('[Password Reset] SMTP not configured. Reset link:', resetUrl);
+    return;
+  }
+
+  await transporter.sendMail({
+    from: fromEmail,
+    to: toEmail,
+    subject: 'Digital Library Password Reset',
+    html: `
+      <p>You requested a password reset for your Digital Library account.</p>
+      <p>Click the link below to reset your password (valid for 15 minutes):</p>
+      <p><a href="${resetUrl}">${resetUrl}</a></p>
+      <p>If you did not request this, you can ignore this email.</p>
+    `,
+  });
+};
 
 userApp.post(
     '/register',
@@ -24,7 +66,7 @@ userApp.post(
         return;
       }
 
-      let validRole = ['user', 'student', 'faculty', 'admin'].includes(role) ? role : 'user';
+      let validRole = ['user', 'admin'].includes(role) ? role : 'user';
 
       // Admin signup requires a secret code
       if (validRole === 'admin') {
@@ -86,6 +128,77 @@ userApp.post(
       });
     })
   );
+
+userApp.post(
+  '/forgot-password',
+  expressAsyncHandler(async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).send({ message: 'Email is required' });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(200).send({
+        message: 'If this email is registered, a password reset link has been sent.'
+      });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpire = new Date(Date.now() + 15 * 60 * 1000);
+    await user.save();
+
+    const clientBase = process.env.CLIENT_URL || 'http://localhost:5178';
+    const resetUrl = `${clientBase}/reset-password/${resetToken}`;
+
+    try {
+      await sendPasswordResetEmail(user.email, resetUrl);
+      return res.status(200).send({
+        message: 'If this email is registered, a password reset link has been sent.'
+      });
+    } catch (err) {
+      user.resetPasswordToken = null;
+      user.resetPasswordExpire = null;
+      await user.save();
+      return res.status(500).send({ message: 'Unable to send reset email. Please try again.' });
+    }
+  })
+);
+
+userApp.post(
+  '/reset-password/:token',
+  expressAsyncHandler(async (req, res) => {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!password || password.length < 6) {
+      return res.status(400).send({ message: 'Password must be at least 6 characters long' });
+    }
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpire: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).send({ message: 'Reset link is invalid or has expired' });
+    }
+
+    user.password = password;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpire = null;
+    await user.save();
+
+    res.status(200).send({ message: 'Password reset successful. Please log in with your new password.' });
+  })
+);
 
 // Verify token and return user info (used by admin app)
 userApp.get(

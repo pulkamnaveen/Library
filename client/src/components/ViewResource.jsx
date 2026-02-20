@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_BASE_URL } from "../config";
 
 const ViewResource = () => {
   const { id } = useParams();
@@ -11,9 +12,9 @@ const ViewResource = () => {
   useEffect(() => {
     const fetchResource = async () => {
       try {
-        const res = await axios.get(`http://localhost:4000/api/resource/${id}`);
+        const res = await axios.get(`${API_BASE_URL}/api/resource/${id}`);
         setResource(res.data.payload);
-      } catch (error) {
+      } catch {
         // Failed to fetch
       } finally {
         setLoading(false);
@@ -83,7 +84,7 @@ const ViewResource = () => {
           <div className="mb-5">
             <h2 className="text-xs font-bold text-gray-300 uppercase tracking-wider mb-2">Download PDF</h2>
             <a
-              href={`http://localhost:4000${resource.fileUrl}`}
+              href={`${API_BASE_URL}${resource.fileUrl}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-lg text-xs transition"
