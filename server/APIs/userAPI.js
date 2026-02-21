@@ -329,4 +329,97 @@ userApp.post(
     })
   );
 
+// GET: User profile
+userApp.get(
+  '/profile',
+  authenticate,
+  expressAsyncHandler(async (req, res) => {
+    const user = await User.findById(req.user.id).select('-password -resetPasswordToken -resetPasswordExpire').populate('bookmarks', 'title category resourceType authorName createdAt');
+    if (!user) return res.status(404).send({ message: 'User not found' });
+    res.status(200).send({ message: 'Profile fetched', payload: user });
+  })
+);
+
+// PUT: Update user profile (name, password)
+userApp.put(
+  '/profile',
+  authenticate,
+  expressAsyncHandler(async (req, res) => {
+    const { name, currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).send({ message: 'User not found' });
+
+    if (name && name.trim()) user.name = name.trim();
+
+    if (newPassword) {
+      if (!currentPassword) return res.status(400).send({ message: 'Current password is required to set a new password' });
+      const isMatch = await user.matchPassword(currentPassword);
+      if (!isMatch) return res.status(400).send({ message: 'Current password is incorrect' });
+      if (newPassword.length < 6) return res.status(400).send({ message: 'New password must be at least 6 characters' });
+      user.password = newPassword;
+    }
+
+    await user.save();
+    res.status(200).send({ message: 'Profile updated successfully', payload: { name: user.name, email: user.email } });
+  })
+);
+
+// POST: Toggle bookmark (add if not present, remove if present)
+userApp.post(
+  '/bookmark/:resourceId',
+  authenticate,
+  expressAsyncHandler(async (req, res) => {
+    const { resourceId } = req.params;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).send({ message: 'User not found' });
+
+    const idx = user.bookmarks.findIndex(id => id.toString() === resourceId);
+    if (idx === -1) {
+      user.bookmarks.push(resourceId);
+      await user.save();
+      res.status(200).send({ message: 'Bookmarked', bookmarked: true });
+    } else {
+      user.bookmarks.splice(idx, 1);
+      await user.save();
+      res.status(200).send({ message: 'Bookmark removed', bookmarked: false });
+    }
+  })
+);
+
+// GET: User bookmarks
+userApp.get(
+  '/bookmarks',
+  authenticate,
+  expressAsyncHandler(async (req, res) => {
+    const user = await User.findById(req.user.id).populate('bookmarks', 'title category resourceType authorName publisher createdAt abstract');
+    if (!user) return res.status(404).send({ message: 'User not found' });
+    res.status(200).send({ message: 'Bookmarks fetched', payload: user.bookmarks });
+  })
+);
+
+// GET: Admin — list all users (admin only)
+userApp.get(
+  '/admin/users',
+  authenticate,
+  expressAsyncHandler(async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).send({ message: 'Admin access required' });
+    const users = await User.find().select('-password -resetPasswordToken -resetPasswordExpire').sort({ createdAt: -1 });
+    res.status(200).send({ message: 'Users fetched', payload: users });
+  })
+);
+
+// DELETE: Admin — delete a user (admin only)
+userApp.delete(
+  '/admin/users/:id',
+  authenticate,
+  expressAsyncHandler(async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).send({ message: 'Admin access required' });
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).send({ message: 'User not found' });
+    if (user.role === 'admin') return res.status(400).send({ message: 'Cannot delete an admin account' });
+    await User.deleteOne({ _id: req.params.id });
+    res.status(200).send({ message: 'User deleted' });
+  })
+);
+
 module.exports=userApp;

@@ -36,10 +36,12 @@ const Navbar = () => {
       <div className="flex items-center gap-3">
         {user ? (
           <>
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-[10px] font-bold text-white">
+            <div
+              className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-[10px] font-bold text-white cursor-pointer"
+              onClick={() => navigate("/profile")}>
               {user.name?.charAt(0)?.toUpperCase() || "U"}
             </div>
-            <span className="text-xs text-gray-400">{user.name}</span>
+            <button onClick={() => navigate("/profile")} className="text-xs text-gray-400 hover:text-white transition">{user.name}</button>
             <button onClick={logout} className="text-xs text-gray-500 hover:text-gray-300 transition ml-1">Sign out</button>
           </>
         ) : (

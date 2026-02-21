@@ -1,12 +1,13 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, BookOpen, PlusCircle, Users } from "lucide-react";
+import { LayoutDashboard, BookOpen, PlusCircle, Users, UserCog } from "lucide-react";
 
 const links = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/resource", icon: BookOpen, label: "Resources" },
   { to: "/addResource", icon: PlusCircle, label: "Add Resource" },
   { to: "/materialRequest", icon: Users, label: "Requests" },
+  { to: "/users", icon: UserCog, label: "Users" },
 ];
 
 const Sidebar = ({ onLogout, adminName }) => (

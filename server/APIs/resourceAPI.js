@@ -27,9 +27,9 @@ resourceApp.get(
       .limit(5)
       .select('title category resourceType createdAt authorName');
     const popularResources = await Resource.find({ isActive: true })
-      .sort({ updatedAt: -1 })
+      .sort({ downloadCount: -1, createdAt: -1 })
       .limit(5)
-      .select('title category resourceType');
+      .select('title category resourceType downloadCount');
 
     res.status(200).send({
       message: 'Stats fetched successfully',
@@ -44,11 +44,11 @@ resourceApp.get(
   })
 );
 
-// GET: Search resources
+// GET: Search resources (paginated)
 resourceApp.get(
   '/search',
   expressAsyncHandler(async (req, res) => {
-    const { q, category, resourceType, publisher, author } = req.query;
+    const { q, category, resourceType, publisher, author, page = 1, limit = 12 } = req.query;
 
     const filter = { isActive: true };
 
@@ -67,26 +67,52 @@ resourceApp.get(
     if (publisher) filter.publisher = publisher;
     if (author) filter.authorName = new RegExp(author, 'i');
 
-    const resources = await Resource.find(filter).sort({ createdAt: -1 });
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
+
+    const [resources, total] = await Promise.all([
+      Resource.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limitNum),
+      Resource.countDocuments(filter)
+    ]);
+
     res.status(200).send({
       message: 'Search results',
-      payload: resources
+      payload: resources,
+      pagination: { total, page: pageNum, limit: limitNum, pages: Math.ceil(total / limitNum) }
     });
   })
 );
 
-// GET: Public resources (for all users)
+// GET: Public resources (paginated)
 resourceApp.get(
   '/public',
   expressAsyncHandler(async (req, res) => {
-    const resources = await Resource.find({ 
-      access: { $in: ['Public'] }, 
-      isActive: true 
-    });
+    const { page = 1, limit = 12 } = req.query;
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
+    const filter = { access: { $in: ['Public'] }, isActive: true };
+
+    const [resources, total] = await Promise.all([
+      Resource.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limitNum),
+      Resource.countDocuments(filter)
+    ]);
+
     res.status(200).send({
       message: 'Public resources fetched successfully',
-      payload: resources
+      payload: resources,
+      pagination: { total, page: pageNum, limit: limitNum, pages: Math.ceil(total / limitNum) }
     });
+  })
+);
+
+// POST: Track a download
+resourceApp.post(
+  '/:id/download',
+  expressAsyncHandler(async (req, res) => {
+    await Resource.findByIdAndUpdate(req.params.id, { $inc: { downloadCount: 1 } });
+    res.status(200).send({ message: 'Download tracked' });
   })
 );
 

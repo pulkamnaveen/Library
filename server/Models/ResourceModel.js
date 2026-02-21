@@ -55,6 +55,10 @@ const resourceSchema = new mongoose.Schema(
     fileUrl: {
       type: String,
       default: null
+    },
+    downloadCount: {
+      type: Number,
+      default: 0
     }
   },
   { timestamps: true }

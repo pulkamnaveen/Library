@@ -1,0 +1,67 @@
+services:
+  # ── Backend API ──────────────────────────────────────────────────────────
+  - type: web
+    name: digital-library-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm install --production
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: DBURL
+        sync: false   # set in Render dashboard (MongoDB Atlas URI)
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_SECRET
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false   # e.g. https://your-client.onrender.com,https://your-admin.onrender.com
+      - key: CLIENT_URL
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+
+  # ── Client (Student App) ──────────────────────────────────────────────────
+  - type: web
+    name: digital-library-client
+    runtime: static
+    rootDir: client
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false   # e.g. https://digital-library-api.onrender.com
+      - key: VITE_ADMIN_URL
+        sync: false   # e.g. https://digital-library-admin.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # ── Admin Dashboard ───────────────────────────────────────────────────────
+  - type: web
+    name: digital-library-admin
+    runtime: static
+    rootDir: admin
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false   # e.g. https://digital-library-api.onrender.com
+      - key: VITE_CLIENT_URL
+        sync: false   # e.g. https://digital-library-client.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

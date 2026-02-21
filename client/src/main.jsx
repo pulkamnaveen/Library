@@ -15,6 +15,7 @@ import AuthForm from "./pages/AuthForm";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import DiscussionForums from "./pages/DiscussionForums";
+import UserProfile from "./pages/UserProfile";
 import RootLayout from "./components/RootLayout";
 
 const browserObj = createBrowserRouter([
@@ -28,6 +29,7 @@ const browserObj = createBrowserRouter([
       { path: "/request-material", element: <RequestMaterial /> },
       { path: "/view-details/:id", element: <ViewDetails /> },
       { path: "/discussion-forums", element: <DiscussionForums /> },
+      { path: "/profile", element: <UserProfile /> },
       { path: "/auth", element: <AuthForm /> },
       { path: "/forgot-password", element: <ForgotPassword /> },
       { path: "/reset-password/:token", element: <ResetPassword /> },

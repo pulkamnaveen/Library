@@ -2,12 +2,16 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../config";
+import { useUser } from "../context/UserContext";
 
 const ViewResource = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useUser();
   const [resource, setResource] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
 
   useEffect(() => {
     const fetchResource = async () => {
@@ -22,6 +26,36 @@ const ViewResource = () => {
     };
     fetchResource();
   }, [id]);
+
+  // Check if already bookmarked
+  useEffect(() => {
+    if (!user) return;
+    const token = localStorage.getItem("token");
+    axios.get(`${API_BASE_URL}/api/user/bookmarks`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => {
+        const bms = res.data.payload || [];
+        setBookmarked(bms.some(b => b._id === id));
+      })
+      .catch(() => {});
+  }, [user, id]);
+
+  const handleDownload = async () => {
+    try {
+      await axios.post(`${API_BASE_URL}/api/resource/${id}/download`);
+      setResource(prev => prev ? { ...prev, downloadCount: (prev.downloadCount || 0) + 1 } : prev);
+    } catch { /* non-critical */ }
+  };
+
+  const toggleBookmark = async () => {
+    if (!user) { navigate("/auth"); return; }
+    setBookmarkLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.post(`${API_BASE_URL}/api/user/bookmark/${id}`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      setBookmarked(res.data.bookmarked);
+    } catch { /* non-critical */ }
+    setBookmarkLoading(false);
+  };
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[50vh]">
@@ -48,16 +82,25 @@ const ViewResource = () => {
       <div className="bg-[#12121a] border border-gray-800/40 rounded-xl p-6">
         <div className="flex items-start justify-between gap-4 mb-4">
           <h1 className="text-xl font-bold text-white leading-tight">{resource.title}</h1>
-          <div className="flex gap-1.5 flex-shrink-0">
-            {resource.category && <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">{resource.category}</span>}
-            {resource.resourceType && <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20">{resource.resourceType}</span>}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button onClick={toggleBookmark} disabled={bookmarkLoading}
+              title={bookmarked ? "Remove bookmark" : "Bookmark this"}
+              className={`p-1.5 rounded-lg border transition ${bookmarked ? "bg-amber-500/15 border-amber-500/30 text-amber-400" : "border-gray-800/60 text-gray-500 hover:text-amber-400 hover:border-amber-500/30"}`}>
+              <svg className="w-4 h-4" fill={bookmarked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+            </button>
+            <div className="flex gap-1.5">
+              {resource.category && <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">{resource.category}</span>}
+              {resource.resourceType && <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20">{resource.resourceType}</span>}
+            </div>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 mb-5">
           {resource.authorName && <span>By {resource.authorName}</span>}
           {resource.publisher && <span>&middot; {resource.publisher}</span>}
           <span>&middot; Added {new Date(resource.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-          {resource.access && <span>&middot; {(resource.access || []).join(', ')} access</span>}
+          {resource.downloadCount > 0 && <span>&middot; {resource.downloadCount} download{resource.downloadCount !== 1 ? 's' : ''}</span>}
         </div>
         {(resource.keywords || []).length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-5">
@@ -87,6 +130,7 @@ const ViewResource = () => {
               href={`${API_BASE_URL}${resource.fileUrl}`}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={handleDownload}
               className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-lg text-xs transition"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,12 +148,12 @@ const ViewResource = () => {
               ["Publisher", resource.publisher],
               ["Category", resource.category],
               ["Type", resource.resourceType],
-              ["Access", (resource.access || []).join(", ")],
+              ["Downloads", resource.downloadCount || 0],
               ["Added", new Date(resource.createdAt).toLocaleDateString()],
             ].map(([label, value]) => (
               <div key={label}>
                 <span className="text-[10px] text-gray-600 uppercase">{label}</span>
-                <p className="text-xs text-gray-400">{value || "N/A"}</p>
+                <p className="text-xs text-gray-400">{value ?? "N/A"}</p>
               </div>
             ))}
           </div>
@@ -120,5 +164,3 @@ const ViewResource = () => {
 };
 
 export default ViewResource;
-
-

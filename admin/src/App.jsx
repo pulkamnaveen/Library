@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import Resource from "./pages/Resource";
 import AddResource from "./pages/AddResource";
 import MaterialRequest from "./pages/MaterialRequest";
+import Users from "./pages/Users";
 import { API_BASE_URL, CLIENT_APP_URL } from "./config";
 
 const App = () => {
@@ -95,6 +96,7 @@ const App = () => {
             <Route path="/resource" element={<Resource />} />
             <Route path="/addResource" element={<AddResource />} />
             <Route path="/materialRequest" element={<MaterialRequest />} />
+            <Route path="/users" element={<Users />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </main>

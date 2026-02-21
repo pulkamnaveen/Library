@@ -132,3 +132,65 @@ Vite auto-shifts ports if occupied. Check terminal output for actual URLs.
 - Login using account with `role: admin`
 - Ensure admin signup uses correct `ADMIN_SECRET`
 - If token is stale, logout and login again
+
+---
+
+## 7) Deploying to Production (Render.com)
+
+A `render.yaml` blueprint is included — connect your GitHub repo to Render and it will create all three services automatically.
+
+### Manual setup
+
+#### Backend (Web Service — Node)
+
+| Setting | Value |
+|---|---|
+| Root Directory | `server` |
+| Build Command | `npm install --production` |
+| Start Command | `node server.js` |
+| Node version | ≥ 18 |
+
+**Required environment variables:**
+
+| Variable | Notes |
+|---|---|
+| `NODE_ENV` | `production` |
+| `DBURL` | MongoDB Atlas connection string |
+| `JWT_SECRET` | Long random string (≥ 32 chars) |
+| `ADMIN_SECRET` | Secret used when creating admin accounts |
+| `CORS_ORIGINS` | Comma-separated deployed frontend URLs |
+| `CLIENT_URL` | Deployed client URL (for password-reset links) |
+| `SMTP_*` | Optional — for real password-reset emails |
+
+#### Client (Static Site)
+
+| Setting | Value |
+|---|---|
+| Root Directory | `client` |
+| Build Command | `npm install && npm run build` |
+| Publish Directory | `dist` |
+| Rewrite rule | `/* → /index.html` |
+
+**Environment variables:**
+
+| Variable | Example |
+|---|---|
+| `VITE_API_URL` | `https://digital-library-api.onrender.com` |
+| `VITE_ADMIN_URL` | `https://digital-library-admin.onrender.com` |
+
+#### Admin (Static Site)
+
+Same as Client but with Root Directory `admin`.
+
+| Variable | Example |
+|---|---|
+| `VITE_API_URL` | `https://digital-library-api.onrender.com` |
+| `VITE_CLIENT_URL` | `https://digital-library-client.onrender.com` |
+
+### Other platforms
+
+- **Railway**: import repo → set same env vars → deploy `server/` as a service
+- **Vercel / Netlify**: deploy `client/` and `admin/` as separate projects — set
+  root to `client` or `admin`, build command `npm run build`, output `dist`
+- **MongoDB**: use [MongoDB Atlas](https://www.mongodb.com/atlas) free tier and paste the connection string as `DBURL`
+
