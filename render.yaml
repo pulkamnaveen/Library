@@ -3,6 +3,7 @@ services:
   - type: web
     name: digital-library-api
     runtime: node
+    nodeVersion: 20.18.3
     rootDir: server
     buildCommand: npm install --production
     startCommand: node server.js
