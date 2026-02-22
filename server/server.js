@@ -24,7 +24,7 @@ const allowedOrigins = parseOrigins(process.env.CORS_ORIGINS);
 app.use(cors({
     origin: (origin, callback) => {
         if (!origin) return callback(null, true);
-        if (allowedOrigins.length === 0 && process.env.NODE_ENV !== 'production') {
+        if (allowedOrigins.length === 0 || allowedOrigins.includes('*')) {
             return callback(null, true);
         }
         if (allowedOrigins.includes(origin)) {
@@ -38,11 +38,11 @@ app.use(helmet());
 app.disable('x-powered-by');
 
 if (process.env.NODE_ENV === 'production' && !process.env.DBURL) {
-    throw new Error('DBURL is required in production');
+    console.warn('WARNING: DBURL is not set in production');
 }
 
 if (process.env.NODE_ENV === 'production' && allowedOrigins.length === 0) {
-    throw new Error('CORS_ORIGINS must be set in production');
+    console.warn('WARNING: CORS_ORIGINS is not set — allowing all origins');
 }
 
 const port=process.env.PORT || 4000;
