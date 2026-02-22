@@ -19,17 +19,22 @@ const parseOrigins = (value) => {
     return value.split(',').map((origin) => origin.trim()).filter(Boolean);
 };
 
-const allowedOrigins = parseOrigins(process.env.CORS_ORIGINS);
+const defaultOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5178',
+    'http://localhost:5179',
+    'https://library-1-ckoo.onrender.com',
+    'https://library-2-n63j.onrender.com',
+];
+const envOrigins = parseOrigins(process.env.CORS_ORIGINS);
+const allowedOrigins = [...new Set([...defaultOrigins, ...envOrigins])];
 
 app.use(cors({
     origin: (origin, callback) => {
         if (!origin) return callback(null, true);
-        if (allowedOrigins.length === 0 || allowedOrigins.includes('*')) {
-            return callback(null, true);
-        }
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        }
+        if (allowedOrigins.includes('*')) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
         return callback(new Error('CORS policy: origin not allowed'));
     },
     credentials: true,
